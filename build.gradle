@@ -1,0 +1,40 @@
+plugins {
+    id 'idea'
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+}
+
+ext {
+    sdkVersion = '1.9.61'
+    jettyVersion = '9.3.18.v20170406'
+}
+
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+dependencies {
+    api "com.google.appengine:appengine-api-1.0-sdk:${sdkVersion}"
+    api "com.google.appengine:appengine-api-stubs:${sdkVersion}"
+    api "com.google.appengine:appengine-local-runtime:${sdkVersion}" 
+    api "com.google.appengine:appengine-remote-api:${sdkVersion}"
+    api "com.google.appengine:appengine-testing:${sdkVersion}"
+    api "com.google.appengine:appengine-tools-sdk:${sdkVersion}"
+
+    implementation 'javax.servlet:javax.servlet-api:3.1.0'
+    implementation 'javax.xml.ws:jaxws-api:2.3.1'
+    implementation "org.eclipse.jetty:jetty-http:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-server:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-webapp:${jettyVersion}"
+}
+
+task copyDependencies(type: Copy) {
+  description 'Copies jar dependencies to build/dep directory.'
+  group 'Output'
+  from project.configurations.runtimeClasspath
+  into 'build/deps'
+  exclude '**/appscale-*.jar'
+}
