@@ -13,10 +13,9 @@ mkdir -pv "${REPACK_DIR}/updates"
 
 pushd "${REPACK_DIR}/updates"
   jar xf ../../libs/appscale-java8-runtime.jar
-  rm -META-INF
 popd
 pushd "${REPACK_DIR}"
   cp -v ../deps/appengine-local-runtime-*.jar appengine-local-runtime.jar
-  jar uvMf appengine-local-runtime.jar -C updates/ .
+  jar uvf appengine-local-runtime.jar -C updates/ .
 popd
 
