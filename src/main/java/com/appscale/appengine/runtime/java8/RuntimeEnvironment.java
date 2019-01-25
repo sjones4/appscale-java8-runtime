@@ -9,20 +9,19 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
-import com.appscale.appengine.runtime.java8.users.LoginCookies;
-import com.appscale.appengine.runtime.java8.users.LoginCookies.LoginCookie;
 import com.google.appengine.repackaged.com.google.common.base.MoreObjects;
+import com.google.appengine.repackaged.com.google.common.io.BaseEncoding;
 import com.google.appengine.tools.development.BackgroundThreadFactory;
 import com.google.appengine.tools.development.ModulesFilterHelper;
 import com.google.appengine.tools.development.RequestEndListener;
@@ -33,7 +32,8 @@ import com.google.apphosting.api.ApiProxy;
 public class RuntimeEnvironment implements ApiProxy.Environment {
 
   private static final Logger logger = Logger.getLogger(RuntimeEnvironment.class.getName());
-  private static AtomicInteger requestID = new AtomicInteger();
+  private static final String DEVEL_FAKE_IS_ADMIN_RAW_HEADER = "X-AppEngine-Fake-Is-Admin";
+  private static final AtomicInteger requestID = new AtomicInteger();
 
   private final String appId;
   private final String moduleId;
@@ -81,13 +81,13 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
     this.attributes.put( "com.google.appengine.api.ThreadManager.BACKGROUND_THREAD_FACTORY",
         new BackgroundThreadFactory( appId, moduleName, majorVersionId ) );
 
-    final Optional<LoginCookie> loginCookie = LoginCookies.fromRequest(request);
-    if (loginCookie.isPresent()) {
+    if (checkForceAdmin(request)) {
       this.loggedIn = true;
-      this.email = loginCookie.get().getEmail();
-      this.admin = loginCookie.get().isAdmin();
-      this.attributes.put("com.google.appengine.api.users.UserService.user_id_key", loginCookie.get().getUserId());
-      this.attributes.put("com.google.appengine.api.users.UserService.user_organization", "");
+      this.email = "admin@admin.com";
+      this.admin = true;
+      if (request.getHeader("X-AppEngine-QueueName") != null) {
+        this.attributes.put("com.google.appengine.request.offline", Boolean.TRUE);
+      }
     } else {
       this.loggedIn = false;
       this.email = null;
@@ -197,6 +197,40 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
     } catch (Exception var6) {
       return "";
     }
+  }
+
+  private boolean checkForceAdmin(HttpServletRequest request) {
+    final String secretHashHeader = request.getHeader(DEVEL_FAKE_IS_ADMIN_RAW_HEADER);
+    if(secretHashHeader != null) {
+      final byte[] secretHash = getSecretHash();
+      return MessageDigest.isEqual(
+          secretHash,
+          BaseEncoding.base16().lowerCase().decode(secretHashHeader.trim()));
+    }
+    return false;
+  }
+
+  private byte[] getSecretHash() {
+    String secret = getAppName() + "/" + getSecret();
+    return toSHA1(secret.getBytes());
+  }
+
+  private byte[] toSHA1(byte[] convertme) {
+    MessageDigest md;
+    try {
+      md = MessageDigest.getInstance("SHA-1");
+    } catch( NoSuchAlgorithmException e) {
+      throw new RuntimeException( e );
+    }
+    return md.digest(convertme);
+  }
+
+  private String getAppName() {
+    return System.getProperty("APPLICATION_ID");
+  }
+
+  private String getSecret() {
+    return System.getProperty("COOKIE_SECRET");
   }
 
   @Override

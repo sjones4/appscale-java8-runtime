@@ -1,5 +1,6 @@
 package com.google.appengine.tools.development.jetty9;
 
+import com.appscale.appengine.runtime.java8.RuntimeEnvironment;
 import com.google.appengine.api.log.dev.DevLogHandler;
 import com.google.appengine.api.log.dev.LocalLogService;
 import com.google.appengine.repackaged.com.google.common.base.Predicates;
@@ -30,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
@@ -401,9 +403,9 @@ public class JettyContainerService extends AbstractContainerService {
       if (baseRequest.getDispatcherType() == DispatcherType.REQUEST) {
         long startTimeUsec = System.currentTimeMillis() * 1000L;
         Semaphore semaphore = new Semaphore(100);
-        LocalEnvironment env = new LocalHttpRequestEnvironment(this.appEngineWebXml.getAppId(), WebModule.getModuleName(this.appEngineWebXml), this.appEngineWebXml.getMajorVersionId(), JettyContainerService.this.instance, JettyContainerService.this.getPort(), request, JettyContainerService.SOFT_DEADLINE_DELAY_MS, JettyContainerService.this.modulesFilterHelper);
+        RuntimeEnvironment env = new RuntimeEnvironment(this.appEngineWebXml.getAppId(), WebModule.getModuleName(this.appEngineWebXml), this.appEngineWebXml.getMajorVersionId(), JettyContainerService.this.instance, JettyContainerService.this.getPort(), request, JettyContainerService.SOFT_DEADLINE_DELAY_MS, JettyContainerService.this.modulesFilterHelper);
         env.getAttributes().put("com.google.appengine.tools.development.api_call_semaphore", semaphore);
-        ConcurrentMap var10000 = env.getAttributes();
+        Map var10000 = env.getAttributes();
         int var9 = JettyContainerService.this.devAppServer.getPort();
         var10000.put("com.google.appengine.runtime.default_version_hostname", (new StringBuilder(21)).append("localhost:").append(var9).toString());
         env.getAttributes().put("com.google.appengine.api.files.filesapi_was_used", false);
