@@ -36,7 +36,6 @@ class AppScaleAppServerClassLoader extends URLClassLoader {
     final List<URL> libs = new ArrayList<>();
     try {
       libs.add(new File(new File(new File( SdkInfo.getSdkRoot(), "lib"), "shared"), "appscale-java8-runtime-container.jar").toURL());
-      libs.add(new File(new File(new File(SdkInfo.getSdkRoot(), "lib"), "shared"), "appscale-java8-runtime-application.jar").toURL());
     } catch (final MalformedURLException e) {
       throw new RuntimeException(e);
     }

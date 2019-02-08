@@ -12,6 +12,7 @@ import com.google.appengine.tools.development.AbstractContainerService;
 import com.google.appengine.tools.development.AppContext;
 import com.google.appengine.tools.development.jetty9.AppEngineAnnotationConfiguration;
 import com.google.appengine.tools.info.AppengineSdk;
+import com.google.appengine.tools.info.SdkInfo;
 import com.google.apphosting.api.ApiProxy;
 import com.google.apphosting.runtime.jetty9.StubSessionManager;
 import com.google.apphosting.utils.config.AppEngineConfigException;
@@ -103,6 +104,7 @@ public class JettyContainerService extends AbstractContainerService {
   protected URL[] getClassPathForApp(final File root) {
     final ClassPathBuilder classPathBuilder = new ClassPathBuilder(this.appEngineWebXml.getClassLoaderConfig());
     classPathBuilder.addUrls(getUserCodeClasspath(root));
+    // classPathBuilder.addUrls(SdkInfo.getUserLibs()); TODO check if gae java8 runtime includes any sdk jars
     classPathBuilder.addUrls(AppengineSdk.getSdk().getUserJspLibs());
 
     final URL[] urls = classPathBuilder.getUrls();
