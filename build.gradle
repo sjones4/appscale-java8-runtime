@@ -1,10 +1,12 @@
-plugins {
-    id 'idea'
-    id 'java-library'
-}
+/**
+ * Copyright 2019 AppScale Systems, Inc
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-repositories {
-    jcenter()
+plugins {
+  id 'idea'
+  id 'java'
 }
 
 ext {
@@ -12,29 +14,28 @@ ext {
     jettyVersion = '9.3.18.v20170406'
 }
 
-targetCompatibility = '1.8'
-sourceCompatibility = '1.8'
+subprojects {
+    apply plugin: 'idea'
+    apply plugin: 'java-library'
 
-dependencies {
-    api "com.google.appengine:appengine-api-1.0-sdk:${sdkVersion}"
-    api "com.google.appengine:appengine-api-stubs:${sdkVersion}"
-    api "com.google.appengine:appengine-local-runtime:${sdkVersion}" 
-    api "com.google.appengine:appengine-remote-api:${sdkVersion}"
-    api "com.google.appengine:appengine-testing:${sdkVersion}"
-    api "com.google.appengine:appengine-tools-sdk:${sdkVersion}"
+    repositories {
+        jcenter()
+    }
 
-    implementation 'javax.servlet:javax.servlet-api:3.1.0'
-    implementation 'javax.xml.ws:jaxws-api:2.3.1'
-    implementation "org.eclipse.jetty:jetty-http:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-server:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-webapp:${jettyVersion}"
+    group = 'com.appscale.appengine'
+
+    targetCompatibility = '1.8'
+    sourceCompatibility = '1.8'
 }
 
-task copyDependencies(type: Copy) {
-  description 'Copies jar dependencies to build/dep directory.'
-  group 'Output'
-  from project.configurations.runtimeClasspath
-  into 'build/deps'
-  exclude '**/appscale-*.jar'
+task buildZip(type: Zip) {
+  archiveName 'appscale-java8-runtime.zip'
+  into('bin') {
+    from fileTree('scripts')
+  }
+  subprojects.each { project ->
+    into('lib') {
+      from fileTree("$project.buildDir/libs")
+    }
+  }
 }

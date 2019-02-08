@@ -1,1 +1,17 @@
-rootProject.name = 'appscale-java8-runtime'
+/**
+ * Copyright 2019 AppScale Systems, Inc
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+def prefix(prefix) {
+  rootProject.name = prefix
+  rootProject.children.each {
+    it.name = "${prefix}-${it.name}"
+  }
+}
+
+include 'container',
+        'main'
+
+prefix('appscale-java8-runtime')

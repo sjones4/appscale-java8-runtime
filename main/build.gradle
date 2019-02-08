@@ -1,0 +1,11 @@
+/**
+ * Copyright 2019 AppScale Systems, Inc
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+dependencies {
+  api "com.google.appengine:appengine-local-runtime:${sdkVersion}"
+  api "com.google.appengine:appengine-testing:${sdkVersion}"
+  api "com.google.appengine:appengine-tools-sdk:${sdkVersion}"
+}

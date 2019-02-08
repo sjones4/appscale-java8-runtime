@@ -1,0 +1,18 @@
+/**
+ * Copyright 2019 AppScale Systems, Inc
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+dependencies {
+  api "com.google.appengine:appengine-api-1.0-sdk:${sdkVersion}"
+  api "com.google.appengine:appengine-local-runtime:${sdkVersion}"
+  api "com.google.appengine:appengine-remote-api:${sdkVersion}"
+  api "com.google.appengine:appengine-testing:${sdkVersion}"
+  api "com.google.appengine:appengine-tools-sdk:${sdkVersion}"
+
+  implementation "org.eclipse.jetty:jetty-http:${jettyVersion}"
+  implementation "org.eclipse.jetty:jetty-server:${jettyVersion}"
+  implementation "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
+  implementation "org.eclipse.jetty:jetty-webapp:${jettyVersion}"
+}
