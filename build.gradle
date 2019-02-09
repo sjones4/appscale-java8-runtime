@@ -33,9 +33,10 @@ task buildZip(type: Zip) {
   into('bin') {
     from fileTree('scripts')
   }
-  subprojects.each { project ->
-    into('lib') {
-      from fileTree("$project.buildDir/libs")
-    }
+  into('lib') {
+    from fileTree("${project(':appscale-java8-runtime-main').buildDir}/libs")
+  }
+  into('lib/shared') {
+    from fileTree("${project(':appscale-java8-runtime-container').buildDir}/libs")
   }
 }
