@@ -5,14 +5,16 @@
  */
 package com.appscale.appengine.runtime.java8.jetty;
 
-import com.appscale.appengine.runtime.java8.RuntimeAppClassLoader;
-import com.appscale.appengine.runtime.java8.RuntimeEnvironment;
+import com.appscale.appengine.runtime.java8.util.LoginCookies;
+import com.appscale.appengine.runtime.java8.util.LoginCookies.LoginCookie;
+import com.appscale.appengine.runtime.java8.util.RuntimeAppClassLoader;
+import com.appscale.appengine.runtime.java8.util.RuntimeEnvironment;
+import com.appscale.appengine.runtime.java8.util.RuntimeEnvironmentListener;
 import com.google.appengine.repackaged.com.google.common.base.Strings;
 import com.google.appengine.tools.development.AbstractContainerService;
 import com.google.appengine.tools.development.AppContext;
 import com.google.appengine.tools.development.jetty9.AppEngineAnnotationConfiguration;
 import com.google.appengine.tools.info.AppengineSdk;
-import com.google.appengine.tools.info.SdkInfo;
 import com.google.apphosting.api.ApiProxy;
 import com.google.apphosting.runtime.jetty9.StubSessionManager;
 import com.google.apphosting.utils.config.AppEngineConfigException;
@@ -28,6 +30,7 @@ import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -291,15 +294,36 @@ public class JettyContainerService extends AbstractContainerService {
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
       if (baseRequest.getDispatcherType() == DispatcherType.REQUEST) {
         final Semaphore semaphore = new Semaphore(MAX_SIMULTANEOUS_API_CALLS);
+
+        final String email;
+        final String userId;
+        final boolean loggedIn;
+        final boolean admin;
+        final Optional<LoginCookie> loginCookie = LoginCookies.fromRequest(request);
+        if (loginCookie.isPresent()) {
+          loggedIn = true;
+          email = loginCookie.get().getEmail();
+          userId = loginCookie.get().getUserId();
+          admin = loginCookie.get().isAdmin();
+        } else {
+          loggedIn = false;
+          email = null;
+          userId = null;
+          admin = false;
+        }
+
         final RuntimeEnvironment env = new RuntimeEnvironment(
             this.appEngineWebXml.getAppId(),
             WebModule.getModuleName(this.appEngineWebXml),
             this.appEngineWebXml.getMajorVersionId(),
+            email,
+            userId,
+            loggedIn,
+            admin,
             JettyContainerService.this.instance,
             JettyContainerService.this.getPort(),
             request,
-            JettyContainerService.SOFT_DEADLINE_DELAY_MS,
-            JettyContainerService.this.modulesFilterHelper);
+            JettyContainerService.SOFT_DEADLINE_DELAY_MS);
         env.getAttributes().put("com.google.appengine.tools.development.api_call_semaphore", semaphore);
         final Map<String, Object> envAttributes = env.getAttributes();
         final int port = JettyContainerService.this.devAppServer.getPort();
@@ -318,7 +342,7 @@ public class JettyContainerService extends AbstractContainerService {
             Thread.currentThread().interrupt();
             logger.log(Level.WARNING, "Interrupted while waiting for API calls to complete:", e);
           }
-          env.callRequestEndListeners();
+          RuntimeEnvironmentListener.requestEnd(env);
         }
       } else {
         super.handle(target, baseRequest, request, response);

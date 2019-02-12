@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.appscale.appengine.runtime.java8;
+package com.appscale.appengine.runtime.java8.util;
 
 import java.io.File;
 import java.net.MalformedURLException;
