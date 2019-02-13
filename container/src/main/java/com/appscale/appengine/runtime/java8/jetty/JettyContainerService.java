@@ -5,10 +5,9 @@
  */
 package com.appscale.appengine.runtime.java8.jetty;
 
-import com.appscale.appengine.runtime.java8.util.LoginCookies;
-import com.appscale.appengine.runtime.java8.util.LoginCookies.LoginCookie;
 import com.appscale.appengine.runtime.java8.util.RuntimeAppClassLoader;
 import com.appscale.appengine.runtime.java8.util.RuntimeEnvironment;
+import com.appscale.appengine.runtime.java8.util.RuntimeEnvironment.RuntimeEnvironmentRequest;
 import com.appscale.appengine.runtime.java8.util.RuntimeEnvironmentListener;
 import com.google.appengine.repackaged.com.google.common.base.Strings;
 import com.google.appengine.tools.development.AbstractContainerService;
@@ -30,7 +29,6 @@ import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -294,35 +292,13 @@ public class JettyContainerService extends AbstractContainerService {
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
       if (baseRequest.getDispatcherType() == DispatcherType.REQUEST) {
         final Semaphore semaphore = new Semaphore(MAX_SIMULTANEOUS_API_CALLS);
-
-        final String email;
-        final String userId;
-        final boolean loggedIn;
-        final boolean admin;
-        final Optional<LoginCookie> loginCookie = LoginCookies.fromRequest(request);
-        if (loginCookie.isPresent()) {
-          loggedIn = true;
-          email = loginCookie.get().getEmail();
-          userId = loginCookie.get().getUserId();
-          admin = loginCookie.get().isAdmin();
-        } else {
-          loggedIn = false;
-          email = null;
-          userId = null;
-          admin = false;
-        }
-
         final RuntimeEnvironment env = new RuntimeEnvironment(
             this.appEngineWebXml.getAppId(),
             WebModule.getModuleName(this.appEngineWebXml),
             this.appEngineWebXml.getMajorVersionId(),
-            email,
-            userId,
-            loggedIn,
-            admin,
+            RuntimeEnvironmentRequest.forRequest(request),
             JettyContainerService.this.instance,
             JettyContainerService.this.getPort(),
-            request,
             JettyContainerService.SOFT_DEADLINE_DELAY_MS);
         env.getAttributes().put("com.google.appengine.tools.development.api_call_semaphore", semaphore);
         final Map<String, Object> envAttributes = env.getAttributes();

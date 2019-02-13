@@ -13,21 +13,22 @@ import java.util.logging.Logger;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import com.google.appengine.repackaged.com.google.common.base.MoreObjects;
+import com.google.appengine.repackaged.com.google.common.io.BaseEncoding;
 
 /**
  *
  */
-public class LoginCookies {
+public class Logins {
   public static final String  COOKIE_NAME             = "dev_appserver_login";
   private final static String SHA                     = "SHA";
   private static final String APPLICATION_ID_PROPERTY = "APPLICATION_ID";
   private static final String COOKIE_SECRET_PROPERTY  = "COOKIE_SECRET";
   private static final String CLOUD_ADMIN_MARKER      = "CLOUD_ADMIN";
 
-  private static final Logger logger                  = Logger.getLogger( LoginCookies.class.getName());
+  private static final Logger logger                  = Logger.getLogger( Logins.class.getName());
   private static final String hextab                  = "0123456789abcdef";
 
-  public static Optional<LoginCookie> fromRequest(final HttpServletRequest request) {
+  public static Optional<LoginCookie> cookie(final HttpServletRequest request) {
     final Cookie cookie = findCookie(request);
     if (cookie == null) {
       return Optional.empty();
@@ -42,6 +43,17 @@ public class LoginCookies {
     } else {
       return Optional.of(cookieData);
     }
+  }
+
+  public static boolean isForceAdmin(final HttpServletRequest request, final String header) {
+    final String secretHashHeader = request.getHeader(header);
+    if(secretHashHeader != null) {
+      final byte[] secretHash = getSecretHash();
+      return MessageDigest.isEqual(
+          secretHash,
+          BaseEncoding.base16().lowerCase().decode(secretHashHeader.trim()));
+    }
+    return false;
   }
 
   private static LoginCookie parseCookie( final Cookie cookie) {
@@ -60,7 +72,7 @@ public class LoginCookies {
     String nickname = parts[1];
     boolean admin = false;
     String[] adminList = parts[ 2 ].split( "," );
-    String curApp = System.getProperty(APPLICATION_ID_PROPERTY);
+    String curApp = getAppName();
     if (curApp == null) {
       logger.log(Level.FINE, "Current app is not set when placing cookie!");
     } else {
@@ -72,7 +84,7 @@ public class LoginCookies {
     }
     String hsh = parts[3];
     boolean valid_cookie = true;
-    String cookie_secret = System.getProperty(COOKIE_SECRET_PROPERTY);
+    String cookie_secret = getSecret();
     if (cookie_secret == null || cookie_secret.isEmpty()) {
       return new LoginCookie("", false, "", false);
     }
@@ -111,6 +123,21 @@ public class LoginCookies {
     return cookieData;
   }
 
+  private static byte[] getSecretHash() {
+    String secret = getAppName() + "/" + getSecret();
+    return toSHA1(secret.getBytes());
+  }
+
+  private static byte[] toSHA1(byte[] convertme) {
+    MessageDigest md;
+    try {
+      md = MessageDigest.getInstance("SHA-1");
+    } catch( NoSuchAlgorithmException e) {
+      throw new RuntimeException( e );
+    }
+    return md.digest(convertme);
+  }
+
   private static Cookie findCookie( final HttpServletRequest req ) {
     final Cookie[] cookies = req.getCookies();
     if (cookies != null) {
@@ -121,6 +148,14 @@ public class LoginCookies {
       }
     }
     return null;
+  }
+
+  private static String getAppName() {
+    return System.getProperty(APPLICATION_ID_PROPERTY);
+  }
+
+  private static String getSecret() {
+    return System.getProperty(COOKIE_SECRET_PROPERTY);
   }
 
   public static final class LoginCookie {

@@ -21,8 +21,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
+import com.appscale.appengine.runtime.java8.util.Logins.LoginCookie;
 import com.google.appengine.repackaged.com.google.common.base.MoreObjects;
+import com.google.appengine.repackaged.com.google.common.base.Strings;
+import com.google.appengine.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.appengine.repackaged.com.google.common.collect.ImmutableSet;
+import com.google.appengine.repackaged.com.google.common.collect.Maps;
 import com.google.apphosting.api.ApiProxy;
 import com.google.apphosting.api.ApiProxy.Environment;
 
@@ -49,25 +53,20 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
   private final String appId;
   private final String moduleId;
   private final String versionId;
+  private final boolean loggedIn;
+  private final String email;
+  private final boolean admin;
   private final Collection<RuntimeEnvironmentListener> listeners;
   private final ConcurrentMap<String, Object> attributes;
   private final Long endTime;
-
-  private final String email;
-  private final boolean loggedIn;
-  private final boolean admin;
 
   public RuntimeEnvironment(
       final String appId,
       final String moduleName,
       final String majorVersionId,
-      final String email,
-      final String userId,
-      final boolean loggedIn,
-      final boolean admin,
+      final RuntimeEnvironmentRequest reRequest,
       final int instance,
       final Integer port,
-      final HttpServletRequest request,
       final Long deadlineMillis
   ) {
     this.attributes = new ConcurrentHashMap<>();
@@ -82,36 +81,24 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
       }
       this.endTime = System.currentTimeMillis( ) + deadlineMillis;
     }
-    this.loggedIn = loggedIn;
-    if (this.loggedIn) {
-      this.email = email;
-      this.admin = admin;
-    } else {
-      this.email = null;
-      this.admin = false;
-    }
-
+    this.loggedIn = reRequest.isLoggedIn();
+    this.email = reRequest.getEmail();
+    this.admin = reRequest.isAdmin();
     setInstance( this.attributes, instance );
     setPort( this.attributes, port );
     this.listeners = Collections.newSetFromMap( new ConcurrentHashMap<>( 10 ) );
     this.attributes.put( "com.google.appengine.runtime.request_log_id", this.generateRequestId( ) );
     this.attributes.put( "com.google.appengine.runtime.environment.listeners", this.listeners );
-    this.attributes.put( "com.google.appengine.request.start_time", new Date( ) );
     this.attributes.put( "com.google.appengine.api.ThreadManager.REQUEST_THREAD_FACTORY",
         new CurrentRequestThreadFactory() );
     this.attributes.put( "com.google.appengine.api.ThreadManager.BACKGROUND_THREAD_FACTORY",
         new BackgroundThreadFactory() );
-
-    if (this.loggedIn) {
-      this.attributes.put("com.google.appengine.api.users.UserService.user_id_key", userId);
+    if (reRequest.isLoggedIn() && !Strings.isNullOrEmpty(reRequest.getUserId())) {
+      this.attributes.put("com.google.appengine.api.users.UserService.user_id_key", reRequest.getUserId());
       this.attributes.put("com.google.appengine.api.users.UserService.user_organization", "");
     }
-
-    this.attributes.put("com.google.appengine.http_servlet_request", request);
-
-    if (request.getHeader("X-AppEngine-QueueName") != null) {
-      this.attributes.put("com.google.appengine.request.offline", Boolean.TRUE);
-    }
+    this.attributes.put("com.google.appengine.request.start_time", new Date());
+    this.attributes.putAll(reRequest.getAttributes());
 
     logger.log( Level.FINE, () -> "Request environment: " + this );
   }
@@ -252,6 +239,78 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
         .add( "loggedIn", loggedIn )
         .add( "admin", admin )
         .toString( );
+  }
+
+  public static class RuntimeEnvironmentRequest {
+    public static final String HEADER_FAKE_IS_ADMIN = "X-AppEngine-Fake-Is-Admin";
+    public static final String HEADER_QUEUE_NAME = "X-AppEngine-QueueName";
+
+    private final String email;
+    private final String userId;
+    private final boolean loggedIn;
+    private final boolean admin;
+    private final Map<String,Object> attributes;
+
+    public static RuntimeEnvironmentRequest forRequest(final HttpServletRequest request) {
+      return new RuntimeEnvironmentRequest(request);
+    }
+
+    public RuntimeEnvironmentRequest(final HttpServletRequest request) {
+      final String email;
+      final String userId;
+      final boolean loggedIn;
+      final boolean admin;
+
+      final Optional<LoginCookie> loginCookie = Logins.cookie(request);
+      if (Logins.isForceAdmin(request, HEADER_FAKE_IS_ADMIN)) {
+        loggedIn = true;
+        userId = null;
+        email = "admin@admin.com";
+        admin = true;
+      } else if (loginCookie.isPresent()) {
+        loggedIn = true;
+        email = loginCookie.get().getEmail();
+        userId = loginCookie.get().getUserId();
+        admin = loginCookie.get().isAdmin();
+      } else {
+        loggedIn = false;
+        email = null;
+        userId = null;
+        admin = false;
+      }
+
+      final Map<String,Object> attributes = Maps.newLinkedHashMap();
+      if (request.getHeader(HEADER_QUEUE_NAME) != null) {
+        attributes.put("com.google.appengine.request.offline", Boolean.TRUE);
+      }
+      attributes.put("com.google.appengine.http_servlet_request", request);
+
+      this.email = email;
+      this.userId = userId;
+      this.loggedIn = loggedIn;
+      this.admin = admin;
+      this.attributes = ImmutableMap.copyOf(attributes);
+    }
+
+    public String getEmail() {
+      return email;
+    }
+
+    public String getUserId() {
+      return userId;
+    }
+
+    public boolean isLoggedIn() {
+      return loggedIn;
+    }
+
+    public boolean isAdmin() {
+      return admin;
+    }
+
+    public Map<String,Object> getAttributes( ) {
+      return this.attributes;
+    }
   }
 
   public static final class AttributeKey<T> {
