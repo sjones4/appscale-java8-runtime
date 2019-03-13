@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.DispatcherType;
@@ -45,6 +46,7 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.util.resource.Resource;
@@ -118,10 +120,13 @@ public class JettyContainerService extends AbstractContainerService {
 
   @SuppressWarnings( "deprecation" )
   protected void connectContainer() throws Exception {
+    logger.info( "Connecting container." );
     this.moduleConfigurationHandle.checkEnvironmentVariables();
     Thread currentThread = Thread.currentThread();
     ClassLoader previousCcl = currentThread.getContextClassLoader();
     this.server = new Server();
+    this.server.setStopTimeout(TimeUnit.SECONDS.toMillis(30));
+    this.server.setStopAtShutdown(true);
 
     try {
       final ForwardedRequestCustomizer forwardedRequestCustomizer = new ForwardedRequestCustomizer();
@@ -144,17 +149,23 @@ public class JettyContainerService extends AbstractContainerService {
   }
 
   protected void startContainer() throws Exception {
+    logger.info( "Starting container." );
     this.context.setAttribute(WEB_XML_ATTR, this.webXml);
     this.context.setAttribute(APPENGINE_WEB_XML_ATTR, this.appEngineWebXml);
-    Thread currentThread = Thread.currentThread();
-    ClassLoader previousCcl = currentThread.getContextClassLoader();
+    final Thread currentThread = Thread.currentThread();
+    final ClassLoader previousCcl = currentThread.getContextClassLoader();
     currentThread.setContextClassLoader( null );
 
     try {
-      JettyContainerService.ApiProxyHandler apiHandler = new JettyContainerService.ApiProxyHandler(this.appEngineWebXml);
+      final StatisticsHandler statisticsHandler = new StatisticsHandler();
+      this.server.setHandler(statisticsHandler);
+
+      final JettyContainerService.ApiProxyHandler apiHandler =
+          new JettyContainerService.ApiProxyHandler(this.appEngineWebXml);
       apiHandler.setHandler(this.context);
-      this.server.setHandler(apiHandler);
-      SessionHandler handler = this.context.getSessionHandler();
+      statisticsHandler.setHandler(apiHandler);
+
+      final SessionHandler handler = this.context.getSessionHandler();
       handler.setSessionManager(new StubSessionManager());
       if (this.isSessionsEnabled()) {
         logger.severe( "Sessions are enabled for application but not supported." );
@@ -166,6 +177,7 @@ public class JettyContainerService extends AbstractContainerService {
   }
 
   protected void stopContainer() throws Exception {
+    logger.info( "Stopping container." );
     this.server.stop();
   }
 
