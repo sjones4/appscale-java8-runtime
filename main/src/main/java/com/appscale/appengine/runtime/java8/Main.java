@@ -128,7 +128,8 @@ public class Main extends SharedMain {
       try {
         Files.write(file, pidString.getBytes(StandardCharsets.UTF_8));
       } catch (final IOException e) {
-        System.out.println( "Error writing pid file " + e );
+        System.err.println( "Unable to write pid file, exiting: " + e );
+        System.exit(1);
       }
     }
   }
