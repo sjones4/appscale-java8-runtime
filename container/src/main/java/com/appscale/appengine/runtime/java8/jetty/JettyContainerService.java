@@ -135,7 +135,6 @@ public class JettyContainerService extends AbstractContainerService {
       NetworkTrafficSelectChannelConnector connector = new NetworkTrafficSelectChannelConnector(this.server, null, null, null, 0, Runtime.getRuntime().availableProcessors(), connectionFactory );
       connector.setHost(this.address);
       connector.setPort(this.port);
-      connector.setSoLingerTime(0);
       connector.open();
       this.server.addConnector(connector);
       this.port = connector.getLocalPort();
