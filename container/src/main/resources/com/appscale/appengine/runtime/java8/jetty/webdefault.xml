@@ -148,7 +148,7 @@
 
   <servlet>
     <servlet-name>_ah_channelServeScript</servlet-name>
-    <servlet-class>com.google.appengine.api.channel.dev.ServeScriptServlet</servlet-class>
+    <servlet-class>com.appscale.appengine.runtime.api.channel.ServeScriptServlet</servlet-class>
   </servlet>
 
   <servlet>
