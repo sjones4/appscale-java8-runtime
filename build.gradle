@@ -10,7 +10,7 @@ plugins {
 }
 
 ext {
-    sdkVersion = '1.9.61'
+    sdkVersion = '1.9.73'
     jettyVersion = '9.3.18.v20170406'
 }
 

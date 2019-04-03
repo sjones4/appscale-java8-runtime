@@ -15,7 +15,8 @@ import com.google.appengine.tools.development.AppContext;
 import com.google.appengine.tools.development.jetty9.AppEngineAnnotationConfiguration;
 import com.google.appengine.tools.info.AppengineSdk;
 import com.google.apphosting.api.ApiProxy;
-import com.google.apphosting.runtime.jetty9.StubSessionManager;
+import com.google.apphosting.runtime.jetty94.SessionManagerHandler;
+import com.google.apphosting.runtime.jetty94.SessionManagerHandler.Config;
 import com.google.apphosting.utils.config.AppEngineConfigException;
 import com.google.apphosting.utils.config.AppEngineWebXml;
 import com.google.apphosting.utils.config.ClassPathBuilder;
@@ -164,12 +165,10 @@ public class JettyContainerService extends AbstractContainerService {
           new JettyContainerService.ApiProxyHandler(this.appEngineWebXml);
       apiHandler.setHandler(this.context);
       statisticsHandler.setHandler(apiHandler);
-
-      final SessionHandler handler = this.context.getSessionHandler();
-      handler.setSessionManager(new StubSessionManager());
-      if (this.isSessionsEnabled()) {
-        logger.severe( "Sessions are enabled for application but not supported." );
-      }
+      SessionManagerHandler.create(Config.builder()
+          .setEnableSession(this.isSessionsEnabled())
+          .setServletContextHandler(this.context)
+          .build());
       this.server.start();
     } finally {
       currentThread.setContextClassLoader(previousCcl);
