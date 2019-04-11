@@ -1,12 +1,12 @@
 #!/bin/bash
 # Launches the AppScale Java 8 AppServer
 
-SDK_BIN="$(cd -P "$(dirname "$0")" && pwd)"
-SDK_HOME="$(dirname "${SDK_BIN}")"
-SDK_LIB="${SDK_HOME}/lib"
-CLASSPATH="${SDK_LIB}/appscale-java8-runtime-main.jar:${SDK_LIB}/appengine-tools-api.jar"
+J8R_BIN="$(cd -P "$(dirname "$0")" && pwd)"
+J8R_HOME="$(dirname "${J8R_BIN}")"
+SDK_LIB="${J8R_HOME}/sdk/lib"
+SDK_JAR="${SDK_LIB}/appscale-java8-runtime-main.jar"
 
-APP_OPTS="-DAPPLICATION_ID=${APPLICATION_ID}"
+APP_OPTS="-ea -DAPPLICATION_ID=${APPLICATION_ID}"
 APP_ARGS=""
 
 while test -n "${1}"; do
@@ -30,8 +30,4 @@ while test -n "${1}"; do
   shift
 done
 
-exec java \
-    -ea -cp "${CLASSPATH}" \
-    ${APP_OPTS} \
-    "com.appscale.appengine.runtime.java8.Main" ${APP_ARGS}
-
+exec java ${APP_OPTS} -jar "${SDK_JAR}" ${APP_ARGS}

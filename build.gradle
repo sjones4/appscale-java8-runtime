@@ -5,34 +5,74 @@
  */
 
 plugins {
+  id "de.undercouch.download" version "3.4.3"
   id 'idea'
   id 'java'
 }
 
 ext {
-    sdkVersion = '1.9.61'
-    jettyVersion = '9.3.18.v20170406'
+  jettyVersion = '9.3.18.v20170406'
+  sdkVersion = '1.9.61'
+  sdkChecksum = 'b4af16664d78586ca0008e08f2fd7db8e2f58af6d0c8dd908f0b8e0f9eb1009b'
 }
 
 subprojects {
-    apply plugin: 'idea'
-    apply plugin: 'java-library'
+  apply plugin: 'idea'
+  apply plugin: 'java-library'
 
-    repositories {
-        jcenter()
-    }
+  repositories {
+    jcenter()
+  }
 
-    group = 'com.appscale.appengine'
+  group = 'com.appscale.appengine'
 
-    targetCompatibility = '1.8'
-    sourceCompatibility = '1.8'
+  targetCompatibility = '1.8'
+  sourceCompatibility = '1.8'
 }
 
-task buildZip(type: Zip) {
-  archiveName 'appscale-java8-runtime.zip'
+task downloadSdk(type: Download) {
+  src "https://storage.googleapis.com/appengine-sdks/featured/appengine-java-sdk-${sdkVersion}.zip"
+  dest file("$buildDir/sdk/appengine-java-sdk-${sdkVersion}.zip")
+  overwrite false
+}
+
+task verifySdk(type: Verify, dependsOn: downloadSdk) {
+  src file("$buildDir/sdk/appengine-java-sdk-${sdkVersion}.zip")
+  algorithm 'SHA-256'
+  checksum sdkChecksum
+}
+
+task unzipSdk(type: Copy, dependsOn: verifySdk) {
+  from zipTree("$buildDir/sdk/appengine-java-sdk-${sdkVersion}.zip")
+  into "$buildDir/sdk/orig"
+}
+
+task runtime(type: Zip, dependsOn: [assemble, unzipSdk]) {
+  archiveName "appscale-java8-runtime-${sdkVersion}.zip"
+  into('appscale-java8-runtime') {
+    from zipTree("$buildDir/distributions/appscale-java8-runtime-root.zip")
+    into('sdk') {
+      from("$buildDir/sdk/orig/appengine-java-sdk-${sdkVersion}") {
+        exclude "demos/**"
+        exclude "docs/**"
+        exclude "lib/java-managed-vm/**"
+        exclude "lib/testing/**"
+        exclude "src/**"
+      }
+      from zipTree("$buildDir/distributions/appscale-java8-runtime-sdk.zip")
+    }
+  }
+}
+
+task buildRootZip(type: Zip) {
+  archiveName 'appscale-java8-runtime-root.zip'
   into('bin') {
     from fileTree('scripts')
   }
+}
+
+task buildSdkZip(type: Zip, dependsOn: [':appscale-java8-runtime-main:assemble', ':appscale-java8-runtime-container:assemble']) {
+  archiveName 'appscale-java8-runtime-sdk.zip'
   into('lib') {
     from fileTree("${project(':appscale-java8-runtime-main').buildDir}/libs")
   }
@@ -40,3 +80,6 @@ task buildZip(type: Zip) {
     from fileTree("${project(':appscale-java8-runtime-container').buildDir}/libs")
   }
 }
+
+assemble.dependsOn buildRootZip
+assemble.dependsOn buildSdkZip

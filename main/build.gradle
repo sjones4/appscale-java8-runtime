@@ -9,3 +9,13 @@ dependencies {
   api "com.google.appengine:appengine-testing:${sdkVersion}"
   api "com.google.appengine:appengine-tools-sdk:${sdkVersion}"
 }
+
+jar {
+  manifest {
+    attributes(
+        "Main-Class": "com.appscale.appengine.runtime.java8.Main",
+        "Class-Path": "appengine-tools-api.jar"
+    )
+  }
+}
+
