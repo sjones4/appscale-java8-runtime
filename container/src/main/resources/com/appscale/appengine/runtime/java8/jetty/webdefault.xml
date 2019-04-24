@@ -137,23 +137,13 @@
   </servlet>
 
   <servlet>
-    <servlet-name>_ah_blobUpload</servlet-name>
-    <servlet-class>com.google.appengine.api.blobstore.dev.UploadBlobServlet</servlet-class>
-  </servlet>
-
-  <servlet>
     <servlet-name>_ah_blobImage</servlet-name>
     <servlet-class>com.google.appengine.api.images.dev.LocalBlobImageServlet</servlet-class>
   </servlet>
 
   <servlet>
     <servlet-name>_ah_channelServeScript</servlet-name>
-    <servlet-class>com.google.appengine.api.channel.dev.ServeScriptServlet</servlet-class>
-  </servlet>
-
-  <servlet>
-    <servlet-name>_ah_channelLocalChannel</servlet-name>
-    <servlet-class>com.google.appengine.api.channel.dev.LocalChannelServlet</servlet-class>
+    <servlet-class>com.appscale.appengine.runtime.api.channel.ServeScriptServlet</servlet-class>
   </servlet>
 
   <!-- ==================================================================== -->
@@ -277,34 +267,11 @@
   </servlet>
 
   <servlet>
-    <servlet-name>_ah_oauthGetRequestToken</servlet-name>
-    <servlet-class>com.google.appengine.api.users.dev.LocalOAuthRequestTokenServlet</servlet-class>
-  </servlet>
-  <servlet>
-    <servlet-name>_ah_oauthAuthorizeToken</servlet-name>
-    <servlet-class>com.google.appengine.api.users.dev.LocalOAuthAuthorizeTokenServlet</servlet-class>
-  </servlet>
-  <servlet>
-    <servlet-name>_ah_oauthGetAccessToken</servlet-name>
-    <servlet-class>com.google.appengine.api.users.dev.LocalOAuthAccessTokenServlet</servlet-class>
-  </servlet>
-
-  <servlet>
     <servlet-name>_ah_queue_deferred</servlet-name>
     <servlet-class>com.google.apphosting.utils.servlet.DeferredTaskServlet</servlet-class>
   </servlet>
 
-  <servlet>
-    <servlet-name>_ah_sessioncleanup</servlet-name>
-    <servlet-class>com.google.apphosting.utils.servlet.SessionCleanupServlet</servlet-class>
-  </servlet>
-
   <!-- Servlet mappings -->
-  <servlet-mapping>
-    <servlet-name>_ah_sessioncleanup</servlet-name>
-    <url-pattern>/_ah/sessioncleanup</url-pattern>
-  </servlet-mapping>
-
   <servlet-mapping>
     <servlet-name>_ah_default</servlet-name>
     <url-pattern>/</url-pattern>
@@ -321,24 +288,6 @@
   </servlet-mapping>
 
   <servlet-mapping>
-    <servlet-name>_ah_oauthGetRequestToken</servlet-name>
-    <url-pattern>/_ah/OAuthGetRequestToken</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-    <servlet-name>_ah_oauthAuthorizeToken</servlet-name>
-    <url-pattern>/_ah/OAuthAuthorizeToken</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-    <servlet-name>_ah_oauthGetAccessToken</servlet-name>
-    <url-pattern>/_ah/OAuthGetAccessToken</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>_ah_blobUpload</servlet-name>
-    <url-pattern>/_ah/upload/*</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
     <servlet-name>_ah_blobImage</servlet-name>
     <url-pattern>/_ah/img/*</url-pattern>
   </servlet-mapping>
@@ -346,11 +295,6 @@
   <servlet-mapping>
     <servlet-name>_ah_channelServeScript</servlet-name>
     <url-pattern>/_ah/channel/jsapi</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>_ah_channelLocalChannel</servlet-name>
-    <url-pattern>/_ah/channel/dev</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>
