@@ -6,7 +6,7 @@ J8R_HOME="$(dirname "${J8R_BIN}")"
 SDK_LIB="${J8R_HOME}/sdk/lib"
 SDK_JAR="${SDK_LIB}/appscale-java8-runtime-main.jar"
 
-APP_OPTS="-ea -DAPPLICATION_ID=${APPLICATION_ID}"
+APP_OPTS="-Dappengine.sdk.root=${J8R_HOME}/sdk -DAPPLICATION_ID=${APPLICATION_ID}"
 APP_ARGS=""
 
 while test -n "${1}"; do
