@@ -12,6 +12,7 @@ import com.appscale.appengine.runtime.java8.util.RuntimeEnvironmentListener;
 import com.google.appengine.repackaged.com.google.common.base.Strings;
 import com.google.appengine.tools.development.AbstractContainerService;
 import com.google.appengine.tools.development.AppContext;
+import com.google.appengine.tools.development.LocalEnvironment;
 import com.google.appengine.tools.development.jetty9.AppEngineAnnotationConfiguration;
 import com.google.appengine.tools.info.AppengineSdk;
 import com.google.appengine.tools.info.SdkInfo;
@@ -50,7 +51,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.nio.NetworkTrafficSelectChannelConnector;
-import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.webapp.FragmentConfiguration;
 import org.eclipse.jetty.webapp.MetaInfConfiguration;
@@ -80,6 +80,7 @@ public class JettyContainerService extends AbstractContainerService {
   private WebAppContext context;
   private AppContext appContext;
   private Server server;
+  @SuppressWarnings("FieldCanBeLocal")
   private SessionManagerHandler sessionManagerHandler;
 
   protected File initContext() throws IOException {
@@ -322,6 +323,8 @@ public class JettyContainerService extends AbstractContainerService {
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
       if (baseRequest.getDispatcherType() == DispatcherType.REQUEST) {
         final Semaphore semaphore = new Semaphore(MAX_SIMULTANEOUS_API_CALLS);
+        final int port = JettyContainerService.this.devAppServer.getPort();
+
         final RuntimeEnvironment env = new RuntimeEnvironment(
             this.appEngineWebXml.getAppId(),
             WebModule.getModuleName(this.appEngineWebXml),
@@ -330,11 +333,11 @@ public class JettyContainerService extends AbstractContainerService {
             JettyContainerService.this.instance,
             JettyContainerService.this.getPort(),
             JettyContainerService.SOFT_DEADLINE_DELAY_MS);
-        env.getAttributes().put("com.google.appengine.tools.development.api_call_semaphore", semaphore);
         final Map<String, Object> envAttributes = env.getAttributes();
-        final int port = JettyContainerService.this.devAppServer.getPort();
-        envAttributes.put("com.google.appengine.runtime.default_version_hostname", "localhost:" + port);
-        env.getAttributes().put("com.google.appengine.api.files.filesapi_was_used", false);
+        envAttributes.put(LocalEnvironment.API_CALL_SEMAPHORE, semaphore);
+        envAttributes.put(LocalEnvironment.DEFAULT_VERSION_HOSTNAME,
+            System.getProperty("APPLICATION_HOST", "localhost:"+port));
+        envAttributes.put(LocalEnvironment.FILESAPI_WAS_USED, false);
         ApiProxy.setEnvironmentForCurrentThread(env);
         final JettyContainerService.RecordingResponseWrapper wrappedResponse =
             new JettyContainerService.RecordingResponseWrapper(response);

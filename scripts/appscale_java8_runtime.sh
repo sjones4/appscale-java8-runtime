@@ -6,8 +6,12 @@ J8R_HOME="$(dirname "${J8R_BIN}")"
 SDK_LIB="${J8R_HOME}/sdk/lib"
 SDK_JAR="${SDK_LIB}/appscale-java8-runtime-main.jar"
 
-APP_OPTS="-Dappengine.sdk.root=${J8R_HOME}/sdk -DAPPLICATION_ID=${APPLICATION_ID}"
-APP_ARGS=""
+APP_OPTS=""
+APP_ARGS="--sdk_root=${J8R_HOME}/sdk --runtime=java8"
+
+if [ ! -z "${APPLICATION_ID}" ] ; then
+  APP_ARGS="${APP_ARGS} --application=${APPLICATION_ID}"
+fi
 
 while test -n "${1}"; do
   case "${1}" in
@@ -16,9 +20,6 @@ while test -n "${1}"; do
       ;;
     --disable_update_check)
       # ignore, update checks are not supported
-      ;;
-    --pidfile=*)
-      APP_OPTS="${APP_OPTS} -Dappscale.pidfile=${1##--pidfile=}"
       ;;
     --jvm_flag=*)
       APP_OPTS="${APP_OPTS} ${1##--jvm_flag=}"

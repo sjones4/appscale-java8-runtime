@@ -37,23 +37,25 @@ public class Main extends SharedMain {
 
   private String address = "localhost";
   private int port = 8080;
+  private String applicationId;
+  private String applicationDefaultVersionHostname;
+  private String pidfile;
 
-  private static void appscaleInit() {
+  private void appscaleInit() {
     setSystemProperties();
     setSecret();
-    writePidFile();
+    writePidFile(pidfile);
   }
 
   public static void main(final String[] args) {
     SharedMain.sharedInit();
-    appscaleInit();
     new Main().run(args);
   }
 
   @Override
   protected void printHelp(final PrintStream out) {
     out.println("Usage: java " + Main.class.getName() + " [options] <app directory>");
-    out.println("");
+    out.println();
     out.println("Options:");
     for (final Option option : this.buildOptions()) {
       for (final String helpString : option.getHelpLines()) {
@@ -74,7 +76,9 @@ public class Main extends SharedMain {
       }
 
       public List<String> getHelpLines() {
-        return ImmutableList.of(" --address=ADDRESS          The address of the interface on the local machine", "  -a ADDRESS                  to bind to (or 0.0.0.0 for all interfaces).");
+        return ImmutableList.of(
+            " --address=ADDRESS          The address of the interface on the local machine",
+            "  -a ADDRESS                  to bind to (or 0.0.0.0 for all interfaces).");
       }
     }, new Option("p", "port", false) {
       public void apply() {
@@ -82,7 +86,37 @@ public class Main extends SharedMain {
       }
 
       public List<String> getHelpLines() {
-        return ImmutableList.of(" --port=PORT                The port number to bind to on the local machine.", "  -p PORT");
+        return ImmutableList.of(
+            " --port=PORT                The port number to bind to on the local machine.",
+            "  -p PORT");
+      }
+    }, new Option("A", "application", false) {
+      public void apply() {
+        applicationId = this.getValue();
+      }
+
+      public List<String> getHelpLines() {
+        return ImmutableList.of(
+            " --application=APP_ID       Set the application, overriding the application ",
+            "  -A APP_ID                   value from the application's configuration files.");
+      }
+    }, new Option(null, "default_hostname", false) {
+      public void apply() {
+        applicationDefaultVersionHostname = this.getValue();
+      }
+
+      public List<String> getHelpLines() {
+        return ImmutableList.of(
+            " --default_hostname=HOST    Set the host:port for the default version.");
+      }
+    }, new Option(null, "pidfile", false) {
+      public void apply() {
+        pidfile = this.getValue();
+      }
+
+      public List<String> getHelpLines() {
+        return ImmutableList.of(
+            " --pidfile=PID_FILE         Set the path where the process id will be written.");
       }
     }));
     return options;
@@ -94,21 +128,16 @@ public class Main extends SharedMain {
     result.applyArgs();
   }
 
-  private static void setSystemProperties() {
+  private void setSystemProperties() {
     System.setProperty("use_jetty9_runtime", "true");
     System.setProperty("appengine.disableFilesApiWarning", "true");
     System.setProperty("com.google.appengine.disable_api_deadlines", "true");
-    //com.google.appengine.runtime.environment	Development
-    //com.google.appengine.plugin.path
-    //appengine.allowRemoteShutdown
-    //appengine.generated.dir
-    //appengine.api.urlfetch.defaultDeadline
-    //appengine.pythonApiServerFlags
-    //appengine.fullscan.seconds
-    //appengine.runtime
-    //appengine.pathToPythonApiServer
-    //appengine.apisUsingPythonStubs
-    //appengine.default.gcs.bucket.name
+    if (applicationId != null) {
+      System.setProperty("APPLICATION_ID", applicationId);
+    }
+    if (applicationDefaultVersionHostname != null) {
+      System.setProperty("APPLICATION_HOST", applicationDefaultVersionHostname);
+    }
   }
 
   private static void setSecret() {
@@ -120,8 +149,8 @@ public class Main extends SharedMain {
     }
   }
 
-  private static void writePidFile() {
-    final String pidfile = System.getProperty( SYSPROP_PIDFILE );
+  private static void writePidFile(final String defaultPidFile) {
+    final String pidfile = System.getProperty( SYSPROP_PIDFILE, defaultPidFile );
     if ( pidfile != null ) {
       final String pidString = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
       final Path file = Paths.get(pidfile);
@@ -143,6 +172,8 @@ public class Main extends SharedMain {
       final List<String> args = this.getArgs();
 
       try {
+        appscaleInit();
+
         if (args.isEmpty()) {
           printHelp(System.err);
           System.exit(1);
@@ -159,7 +190,7 @@ public class Main extends SharedMain {
 
         File appDir;
         if (args.size() == 1) {
-          appDir = (new File((String)args.get(0))).getCanonicalFile();
+          appDir = (new File(args.get(0))).getCanonicalFile();
         } else {
           printHelp(System.err);
           System.exit(1);
@@ -176,7 +207,7 @@ public class Main extends SharedMain {
           final DevAppServer server = AppScaleAppServerFactory.newInstance(appDir, address, port);
           server.setServiceProperties(stringProperties);
           server.start().await();
-        } catch (InterruptedException var8) {
+        } catch (InterruptedException ignore) {
         }
 
         System.out.println("Shutting down.");
