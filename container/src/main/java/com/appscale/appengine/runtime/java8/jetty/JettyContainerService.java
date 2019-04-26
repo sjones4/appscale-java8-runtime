@@ -14,8 +14,10 @@ import com.google.appengine.tools.development.AbstractContainerService;
 import com.google.appengine.tools.development.AppContext;
 import com.google.appengine.tools.development.jetty9.AppEngineAnnotationConfiguration;
 import com.google.appengine.tools.info.AppengineSdk;
+import com.google.appengine.tools.info.SdkInfo;
 import com.google.apphosting.api.ApiProxy;
-import com.google.apphosting.runtime.jetty9.StubSessionManager;
+import com.google.apphosting.runtime.jetty94.SessionManagerHandler;
+import com.google.apphosting.runtime.jetty94.SessionManagerHandler.Config;
 import com.google.apphosting.utils.config.AppEngineConfigException;
 import com.google.apphosting.utils.config.AppEngineWebXml;
 import com.google.apphosting.utils.config.ClassPathBuilder;
@@ -78,6 +80,7 @@ public class JettyContainerService extends AbstractContainerService {
   private WebAppContext context;
   private AppContext appContext;
   private Server server;
+  private SessionManagerHandler sessionManagerHandler;
 
   protected File initContext() throws IOException {
     this.context = new JettyAppEngineWebAppContext(
@@ -99,15 +102,16 @@ public class JettyContainerService extends AbstractContainerService {
     this.installLocalInitializationEnvironment();
 
     URL[] classPath = getClassPathForApp(appRoot);
-    this.context.setClassLoader(new RuntimeAppClassLoader(classPath, JettyContainerService.class.getClassLoader()));
+    this.context.setClassLoader(new RuntimeAppClassLoader(classPath, webDefaultXml, JettyContainerService.class.getClassLoader()));
 
     return appRoot;
   }
 
   protected URL[] getClassPathForApp(final File root) {
     final ClassPathBuilder classPathBuilder = new ClassPathBuilder(this.appEngineWebXml.getClassLoaderConfig());
+    classPathBuilder.addUrls(SdkInfo.getUserLibs());
+    classPathBuilder.addUrls(getAppscaleExtLibs());
     classPathBuilder.addUrls(getUserCodeClasspath(root));
-    // classPathBuilder.addUrls(SdkInfo.getUserLibs()); TODO check if gae java8 runtime includes any sdk jars
     classPathBuilder.addUrls(AppengineSdk.getSdk().getUserJspLibs());
 
     final URL[] urls = classPathBuilder.getUrls();
@@ -164,12 +168,10 @@ public class JettyContainerService extends AbstractContainerService {
           new JettyContainerService.ApiProxyHandler(this.appEngineWebXml);
       apiHandler.setHandler(this.context);
       statisticsHandler.setHandler(apiHandler);
-
-      final SessionHandler handler = this.context.getSessionHandler();
-      handler.setSessionManager(new StubSessionManager());
-      if (this.isSessionsEnabled()) {
-        logger.severe( "Sessions are enabled for application but not supported." );
-      }
+      this.sessionManagerHandler = SessionManagerHandler.create(Config.builder()
+          .setEnableSession(this.isSessionsEnabled())
+          .setServletContextHandler(this.context)
+          .build());
       this.server.start();
     } finally {
       currentThread.setContextClassLoader(previousCcl);
@@ -217,6 +219,23 @@ public class JettyContainerService extends AbstractContainerService {
     } else {
       return webInf.getFile().getParentFile();
     }
+  }
+
+  private List<URL> getAppscaleExtLibs() {
+    final List<URL> appscaleExtUrls = new ArrayList<>();
+    final File extDir = new File("/usr/share/appscale/ext");
+    if (extDir.isDirectory()) {
+      final File[] extFiles = extDir.listFiles();
+      if (extFiles != null) for(final File file : extFiles) {
+        if (file.getName().endsWith(".jar") && !file.isHidden()) try {
+          appscaleExtUrls.add(file.toURI().toURL());
+        } catch (MalformedURLException e) {
+          logger.log(Level.SEVERE,
+              "Error adding ext files entry to classpath for web application " + file.getAbsolutePath(), e);
+        }
+      }
+    }
+    return appscaleExtUrls;
   }
 
   private List<URL> getUserCodeClasspath(final File root) {

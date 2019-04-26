@@ -11,9 +11,9 @@ plugins {
 }
 
 ext {
-  jettyVersion = '9.3.18.v20170406'
-  sdkVersion = '1.9.61'
-  sdkChecksum = 'b4af16664d78586ca0008e08f2fd7db8e2f58af6d0c8dd908f0b8e0f9eb1009b'
+  jettyVersion = '9.4.14.v20181114'
+  sdkVersion = '1.9.73'
+  sdkChecksum = '2c855a7f2a97dd43287569648b9175c4ab6dce61f1720ef02dc9308a74b33f00'
 }
 
 subprojects {

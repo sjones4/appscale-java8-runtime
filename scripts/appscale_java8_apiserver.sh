@@ -15,6 +15,9 @@ while test -n "${1}"; do
     --datastore_path)
       shift
       ;;
+    --java_app_base_url)
+      shift
+      ;;
     *)
       API_ARGS="${API_ARGS} ${1}"
       ;;
