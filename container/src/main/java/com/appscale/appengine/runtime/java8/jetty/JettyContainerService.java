@@ -110,7 +110,6 @@ public class JettyContainerService extends AbstractContainerService {
 
   protected URL[] getClassPathForApp(final File root) {
     final ClassPathBuilder classPathBuilder = new ClassPathBuilder(this.appEngineWebXml.getClassLoaderConfig());
-    classPathBuilder.addUrls(SdkInfo.getUserLibs());
     classPathBuilder.addUrls(getAppscaleExtLibs());
     classPathBuilder.addUrls(getUserCodeClasspath(root));
     classPathBuilder.addUrls(AppengineSdk.getSdk().getUserJspLibs());
