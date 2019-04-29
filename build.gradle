@@ -49,14 +49,21 @@ task unzipSdk(type: Copy, dependsOn: verifySdk) {
 
 task runtime(type: Zip, dependsOn: [assemble, unzipSdk]) {
   archiveName "appscale-java8-runtime-${sdkVersion}.zip"
+  includeEmptyDirs true
   into('appscale-java8-runtime') {
     from zipTree("$buildDir/distributions/appscale-java8-runtime-root.zip")
     into('sdk') {
       from("$buildDir/sdk/orig/appengine-java-sdk-${sdkVersion}") {
+        exclude "bin/**"
         exclude "demos/**"
         exclude "docs/**"
-        exclude "lib/java-managed-vm/**"
-        exclude "lib/testing/**"
+        exclude "jetty93-base/**"
+        exclude "lib/java-managed-vm/**/*.jar"
+        exclude "lib/opt/tools/**/*.jar"
+        exclude "lib/opt/user/**/*.jar"
+        exclude "lib/testing/**/*.jar"
+        exclude "lib/tools/**/*.jar"
+        exclude "lib/user/**/*.jar"
         exclude "src/**"
       }
       from zipTree("$buildDir/distributions/appscale-java8-runtime-sdk.zip")
