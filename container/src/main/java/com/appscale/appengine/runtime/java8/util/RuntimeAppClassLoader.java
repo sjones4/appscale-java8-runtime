@@ -43,7 +43,7 @@ public class RuntimeAppClassLoader extends URLClassLoader {
     this.appServerClassLoader = appServerClassLoader;
     this.sharedCodeLibs = new HashSet<>(AppengineSdk.getSdk().getSharedLibs());
     try {
-      this.sharedCodeLibs.add(new File(new File(new File(SdkInfo.getSdkRoot(), "lib"), "shared"), "appscale-java8-runtime-container.jar").toURL());
+      this.sharedCodeLibs.add(new File(new File(new File(SdkInfo.getSdkRoot().getParentFile(), "lib"), "shared"), "appscale-java8-runtime-container.jar").toURL());
     } catch (final MalformedURLException e) {
       throw new RuntimeException(e);
     }

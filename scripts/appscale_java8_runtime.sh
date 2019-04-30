@@ -3,8 +3,7 @@
 
 J8R_BIN="$(cd -P "$(dirname "$0")" && pwd)"
 J8R_HOME="$(dirname "${J8R_BIN}")"
-SDK_LIB="${J8R_HOME}/sdk/lib"
-SDK_JAR="${SDK_LIB}/appscale-java8-runtime-main.jar"
+J8R_JAR="${J8R_HOME}/lib/appscale-java8-runtime-main.jar"
 
 APP_OPTS=""
 APP_ARGS="--sdk_root=${J8R_HOME}/sdk --runtime=java8"
@@ -31,4 +30,4 @@ while test -n "${1}"; do
   shift
 done
 
-exec java ${APP_OPTS} -jar "${SDK_JAR}" ${APP_ARGS}
+exec java ${APP_OPTS} -jar "${J8R_JAR}" ${APP_ARGS}
