@@ -12,12 +12,10 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -28,6 +26,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.appscale.appengine.runtime.java8.util.AppScaleApiProxy;
 import com.google.appengine.repackaged.com.google.common.base.Joiner;
 import com.google.appengine.repackaged.com.google.common.base.Splitter;
 import com.google.appengine.repackaged.com.google.common.collect.ImmutableMap;
@@ -35,7 +34,6 @@ import com.google.appengine.repackaged.com.google.common.collect.ImmutableSet;
 import com.google.appengine.repackaged.com.google.common.collect.ImmutableSet.Builder;
 import com.google.appengine.tools.development.AbstractContainerService;
 import com.google.appengine.tools.development.ApiProxyLocal;
-import com.google.appengine.tools.development.ApiProxyLocalFactory;
 import com.google.appengine.tools.development.AppContext;
 import com.google.appengine.tools.development.ApplicationConfigurationManager;
 import com.google.appengine.tools.development.ApplicationConfigurationManager.ModuleConfigurationHandle;
@@ -52,6 +50,7 @@ import com.google.apphosting.utils.config.AppEngineConfigException;
 /**
  *
  */
+@SuppressWarnings("unused")
 public class AppScaleAppServer implements DevAppServer {
   private static final Logger logger = Logger.getLogger(AppScaleAppServer.class.getName());
 
@@ -119,11 +118,7 @@ public class AppScaleAppServer implements DevAppServer {
 
     public CountDownLatch start() throws Exception {
       try {
-        return AccessController.doPrivileged(new PrivilegedExceptionAction<CountDownLatch>() {
-          public CountDownLatch run() throws Exception {
-            return doStart();
-          }
-        });
+        return AccessController.doPrivileged((PrivilegedExceptionAction<CountDownLatch>) this::doStart);
       } catch ( PrivilegedActionException var2) {
         throw var2.getException();
       }
@@ -147,17 +142,16 @@ public class AppScaleAppServer implements DevAppServer {
           System.exit(2);
         }
 
-        ApiProxyLocalFactory factory = new ApiProxyLocalFactory();
-        Set<String> apisUsingPythonStubs = new HashSet<>();
+        final int externalApiPort = Integer.parseInt(System.getProperty("appengine.apiPort", "-1"));
+        final Set<String> externalApis = new HashSet<>();
         if (System.getProperty("appengine.apisUsingPythonStubs") != null) {
           for ( final String api : Splitter.on( ',' ).split( System.getProperty( "appengine.apisUsingPythonStubs" ) ) ) {
-            apisUsingPythonStubs.add( api );
+            externalApis.add( api );
           }
         }
 
-        String applicationName = this.applicationConfigurationManager.getModuleConfigurationHandles().get(0).getModule().getAppEngineWebXml().getAppId();
-        this.apiProxyLocal = factory.create(this.modules.getLocalServerEnvironment(), apisUsingPythonStubs, applicationName);
         this.setInboundServicesProperty();
+        this.apiProxyLocal = AppScaleApiProxy.create(this.modules.getLocalServerEnvironment(), externalApis, externalApiPort);
         this.apiProxyLocal.setProperties(this.serviceProperties);
         ApiProxy.setDelegate(this.apiProxyLocal);
         this.installLoggingServiceHandler((DevServices)this.apiProxyLocal);
@@ -229,16 +223,14 @@ public class AppScaleAppServer implements DevAppServer {
         throw new IllegalStateException("Cannot restart a server that is not currently running.");
       } else {
         try {
-          return AccessController.doPrivileged( new PrivilegedExceptionAction<CountDownLatch>() {
-            public CountDownLatch run() throws Exception {
-              modules.shutdown();
-              shutdownLatch.countDown();
-              modules.createConnections();
-              modules.setApiProxyDelegate(apiProxyLocal);
-              modules.startup();
-              shutdownLatch = new CountDownLatch(1);
-              return shutdownLatch;
-            }
+          return AccessController.doPrivileged((PrivilegedExceptionAction<CountDownLatch>) () -> {
+            modules.shutdown();
+            shutdownLatch.countDown();
+            modules.createConnections();
+            modules.setApiProxyDelegate(apiProxyLocal);
+            modules.startup();
+            shutdownLatch = new CountDownLatch(1);
+            return shutdownLatch;
           });
         } catch (PrivilegedActionException var2) {
           throw var2.getException();
@@ -251,15 +243,13 @@ public class AppScaleAppServer implements DevAppServer {
         throw new IllegalStateException("Cannot shutdown a server that is not currently running.");
       } else {
         try {
-          AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
-            public Void run() throws Exception {
-              modules.shutdown();
-              ApiProxy.setDelegate(null);
-              apiProxyLocal = null;
-              serverState = ServerState.SHUTDOWN;
-              shutdownLatch.countDown();
-              return null;
-            }
+          AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+            modules.shutdown();
+            ApiProxy.setDelegate(null);
+            apiProxyLocal = null;
+            serverState = ServerState.SHUTDOWN;
+            shutdownLatch.countDown();
+            return null;
           });
         } catch (PrivilegedActionException var2) {
           throw var2.getException();
@@ -268,16 +258,10 @@ public class AppScaleAppServer implements DevAppServer {
     }
 
     public void gracefulShutdown() throws IllegalStateException {
-      AccessController.doPrivileged(new PrivilegedAction<Future<Void>>() {
-        public Future<Void> run() {
-          return shutdownScheduler.schedule(new Callable<Void>() {
-            public Void call() throws Exception {
-              shutdown();
-              return null;
-            }
-          }, 1000L, TimeUnit.MILLISECONDS);
-        }
-      });
+      AccessController.doPrivileged((PrivilegedAction<Future<Void>>) () -> shutdownScheduler.schedule(() -> {
+        shutdown();
+        return null;
+      }, 1000L, TimeUnit.MILLISECONDS));
     }
 
     public int getPort() {

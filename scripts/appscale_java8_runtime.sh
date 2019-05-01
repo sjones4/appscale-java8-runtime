@@ -23,6 +23,13 @@ while test -n "${1}"; do
     --jvm_flag=*)
       APP_OPTS="${APP_OPTS} ${1##--jvm_flag=}"
       ;;
+    --python_api_server_flag=--external_api_port=*)
+      APP_ARGS="${APP_ARGS} --api_port=${1##--python_api_server_flag=--external_api_port=}"
+      ;;
+    --path_to_python_api_server=*)
+    --python_api_server_flag=*)
+      # ignore, externally managed api server is required
+      ;;
     *)
       APP_ARGS="${APP_ARGS} ${1}"
       ;;

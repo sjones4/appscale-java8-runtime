@@ -80,6 +80,10 @@ public class Main extends SharedMain {
             " --address=ADDRESS          The address of the interface on the local machine",
             "  -a ADDRESS                  to bind to (or 0.0.0.0 for all interfaces).");
       }
+    }, new Option(null, "api_port", false) {
+      public void apply() {
+        System.setProperty("appengine.apiPort", this.getValue());
+      }
     }, new Option("p", "port", false) {
       public void apply() {
         port = Integer.valueOf(this.getValue());
