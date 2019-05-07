@@ -276,6 +276,11 @@
     <servlet-class>com.google.apphosting.utils.servlet.WarmupServlet</servlet-class>
   </servlet>
 
+  <servlet>
+    <servlet-name>_ah_health_check</servlet-name>
+    <servlet-class>com.appscale.appengine.runtime.java8.util.HealthCheckServlet</servlet-class>
+  </servlet>
+
   <!-- Servlet mappings -->
   <servlet-mapping>
     <servlet-name>_ah_default</servlet-name>
@@ -310,6 +315,11 @@
   <servlet-mapping>
     <servlet-name>_ah_warmup</servlet-name>
     <url-pattern>/_ah/warmup</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>_ah_health_check</servlet-name>
+    <url-pattern>/_ah/health_check</url-pattern>
   </servlet-mapping>
 
     <!-- ==================================================================== -->
