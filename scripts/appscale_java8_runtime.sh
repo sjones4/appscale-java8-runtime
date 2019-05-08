@@ -12,6 +12,9 @@ if [ ! -z "${APPLICATION_ID}" ] ; then
   APP_ARGS="${APP_ARGS} --application=${APPLICATION_ID}"
 fi
 
+# Enable log service stub
+#APP_ARGS="${APP_ARGS} --api_using_python_stub=logservice"
+
 while test -n "${1}"; do
   case "${1}" in
     --api_using_python_stub=user)

@@ -39,6 +39,8 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
       AttributeKey.of("com.google.appengine.request.start_time", Date.class);
   public static final AttributeKey<Boolean> ATTR_OFFLINE =
       AttributeKey.of("com.google.appengine.request.offline", Boolean.class);
+  public static final AttributeKey<String> ATTR_REQUEST_LOG_ID =
+      AttributeKey.of("com.google.appengine.runtime.request_log_id", String.class);
 
   private static final Logger logger = Logger.getLogger(RuntimeEnvironment.class.getName());
   private static final AtomicInteger requestID = new AtomicInteger();

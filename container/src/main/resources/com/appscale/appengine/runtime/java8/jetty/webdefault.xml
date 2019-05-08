@@ -33,13 +33,10 @@
     This file is applied to a Web application before its own WEB_INF/web.xml file
   </description>
 
-  <!-- This filter should only be used here, not in devappserver2, since -->
-  <!-- the devappserver2 Python request routing logic configures         -->
-  <!-- logging.                                                          -->
   <filter>
-    <filter-name>_ah_DevAppServerRequestLogFilter</filter-name>
+    <filter-name>_ah_RequestLogFilter</filter-name>
     <filter-class>
-      com.google.appengine.tools.development.DevAppServerRequestLogFilter
+      com.appscale.appengine.runtime.java8.util.RequestLogFilter
     </filter-class>
   </filter>
 
@@ -86,7 +83,7 @@
   </filter>
 
   <filter-mapping>
-    <filter-name>_ah_DevAppServerRequestLogFilter</filter-name>
+    <filter-name>_ah_RequestLogFilter</filter-name>
     <url-pattern>/*</url-pattern>
     <!-- match both real and forwarded requests -->
     <dispatcher>FORWARD</dispatcher>
@@ -123,7 +120,7 @@
   <absolute-ordering>
     <!--Without <others/>, Jetty will not scan for annotations in jars located in WEB-INF/lib.-->
     <others/>
-    <name>_ah_DevAppServerRequestLogFilter</name>
+    <name>_ah_RequestLogFilter</name>
     <name>_ah_StaticFileFilter</name>
     <name>_ah_AbandonedTransactionDetector</name>
     <name>_ah_ServeBlobFilter</name>
