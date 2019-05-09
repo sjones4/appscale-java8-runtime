@@ -129,6 +129,19 @@ public class Main extends SharedMain {
   }
 
   private void setSystemProperties() {
+    // prevent loading of external entities when processing xml documents
+    // external entities are not needed and if used may lead to failure on
+    // application startup if there is an issue accessing the external
+    // resource
+    for (final String xmlAccessProperty : Arrays.asList(
+        "javax.xml.accessExternalDTD",
+        "javax.xml.accessExternalSchema",
+        "javax.xml.accessExternalStylesheet" )) {
+      if (System.getProperty(xmlAccessProperty)==null) {
+        System.setProperty(xmlAccessProperty, "");
+      }
+    }
+
     System.setProperty("use_jetty9_runtime", "true");
     System.setProperty("appengine.disableFilesApiWarning", "true");
     System.setProperty("com.google.appengine.disable_api_deadlines", "true");
