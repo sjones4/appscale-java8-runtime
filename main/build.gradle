@@ -8,6 +8,10 @@ dependencies {
   api "com.google.appengine:appengine-local-runtime:${sdkVersion}"
   api "com.google.appengine:appengine-testing:${sdkVersion}"
   api "com.google.appengine:appengine-tools-sdk:${sdkVersion}"
+
+  testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+  testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+  testRuntimeOnly project(':appscale-java8-runtime-container')
 }
 
 jar {
@@ -19,3 +23,6 @@ jar {
   }
 }
 
+test {
+  useJUnitPlatform()
+}

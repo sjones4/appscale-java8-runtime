@@ -56,7 +56,7 @@ public class Logins {
     return false;
   }
 
-  private static LoginCookie parseCookie( final Cookie cookie) {
+  static LoginCookie parseCookie(final Cookie cookie) {
     String value = cookie.getValue();
 
     // replace chars

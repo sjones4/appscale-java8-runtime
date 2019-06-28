@@ -11,7 +11,9 @@ plugins {
 }
 
 ext {
+  javaVersion = '1.8'
   jettyVersion = '9.4.14.v20181114'
+  junitVersion = '5.4.2'
   sdkVersion = '1.9.73'
   sdkChecksum = '2c855a7f2a97dd43287569648b9175c4ab6dce61f1720ef02dc9308a74b33f00'
 }
@@ -26,8 +28,15 @@ subprojects {
 
   group = 'com.appscale.appengine'
 
-  targetCompatibility = '1.8'
-  sourceCompatibility = '1.8'
+  targetCompatibility = javaVersion
+  sourceCompatibility = javaVersion
+}
+
+idea {
+  project {
+    jdkName = javaVersion
+    languageLevel = javaVersion
+  }
 }
 
 task downloadSdk(type: Download) {
