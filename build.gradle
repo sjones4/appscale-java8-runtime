@@ -14,8 +14,8 @@ ext {
   javaVersion = '1.8'
   jettyVersion = '9.4.14.v20181114'
   junitVersion = '5.4.2'
-  sdkVersion = '1.9.73'
-  sdkChecksum = '2c855a7f2a97dd43287569648b9175c4ab6dce61f1720ef02dc9308a74b33f00'
+  sdkVersion = '1.9.75'
+  sdkChecksum = '32490124d2c9d68f437997d39f07b18d894d23e0a90d2514ce623bd2964868e7'
 }
 
 subprojects {
@@ -64,8 +64,7 @@ task runtime(type: Zip, dependsOn: [assemble, unzipSdk]) {
   archiveName "appscale-java8-runtime-${sdkVersion}.zip"
   includeEmptyDirs true
   into('appscale_java8_runtime') {
-    from zipTree("$buildDir/distributions/appscale-java8-runtime-bin.zip")
-    from zipTree("$buildDir/distributions/appscale-java8-runtime-lib.zip")
+    from zipTree("$buildDir/distributions/appscale-java8-runtime-nosdk.zip")
     into('sdk') {
       from("$buildDir/sdk/orig/appengine-java-sdk-${sdkVersion}") {
         exclude "bin/**"
@@ -84,15 +83,11 @@ task runtime(type: Zip, dependsOn: [assemble, unzipSdk]) {
   }
 }
 
-task buildBinZip(type: Zip) {
-  archiveName 'appscale-java8-runtime-bin.zip'
+task buildDistZip(type: Zip, dependsOn: [':appscale-java8-runtime-main:assemble', ':appscale-java8-runtime-container:assemble']) {
+  archiveName 'appscale-java8-runtime-nosdk.zip'
   into('bin') {
     from fileTree('scripts')
   }
-}
-
-task buildLibZip(type: Zip, dependsOn: [':appscale-java8-runtime-main:assemble', ':appscale-java8-runtime-container:assemble']) {
-  archiveName 'appscale-java8-runtime-lib.zip'
   into('lib') {
     from fileTree("${project(':appscale-java8-runtime-main').buildDir}/libs")
   }
@@ -101,5 +96,4 @@ task buildLibZip(type: Zip, dependsOn: [':appscale-java8-runtime-main:assemble',
   }
 }
 
-assemble.dependsOn buildBinZip
-assemble.dependsOn buildLibZip
+assemble.dependsOn buildDistZip
