@@ -39,6 +39,10 @@ idea {
   }
 }
 
+jar {
+  onlyIf { false }
+}
+
 task downloadSdk(type: Download) {
   src "https://storage.googleapis.com/appengine-sdks/featured/appengine-java-sdk-${sdkVersion}.zip"
   dest file("$buildDir/sdk/appengine-java-sdk-${sdkVersion}.zip")
