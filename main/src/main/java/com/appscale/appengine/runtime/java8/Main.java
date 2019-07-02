@@ -37,6 +37,7 @@ public class Main extends SharedMain {
 
   private String address = "localhost";
   private int port = 8080;
+  private int apiPort = 8081;
   private String applicationId;
   private String applicationDefaultVersionHostname;
   private String pidfile;
@@ -118,6 +119,15 @@ public class Main extends SharedMain {
         return ImmutableList.of(
             " --pidfile=PID_FILE         Set the path where the process id will be written.");
       }
+    }, new Option(null, "python_api_server_port", false) {
+      public void apply() {
+        apiPort = Integer.valueOf(this.getValue());
+      }
+
+      public List<String> getHelpLines() {
+        return ImmutableList.of(
+            " --python_api_server_port=API_PORT Set the port for the api server.");
+      }
     }));
     return options;
   }
@@ -144,6 +154,7 @@ public class Main extends SharedMain {
 
     System.setProperty("use_jetty9_runtime", "true");
     System.setProperty("appengine.disableFilesApiWarning", "true");
+    System.setProperty("appengine.pythonApiServerPort", String.valueOf(apiPort));
     System.setProperty("com.google.appengine.disable_api_deadlines", "true");
     if (applicationId != null) {
       System.setProperty("APPLICATION_ID", applicationId);

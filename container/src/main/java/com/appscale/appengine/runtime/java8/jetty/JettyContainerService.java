@@ -15,7 +15,6 @@ import com.google.appengine.tools.development.AppContext;
 import com.google.appengine.tools.development.LocalEnvironment;
 import com.google.appengine.tools.development.jetty9.AppEngineAnnotationConfiguration;
 import com.google.appengine.tools.info.AppengineSdk;
-import com.google.appengine.tools.info.SdkInfo;
 import com.google.apphosting.api.ApiProxy;
 import com.google.apphosting.runtime.jetty94.SessionManagerHandler;
 import com.google.apphosting.runtime.jetty94.SessionManagerHandler.Config;

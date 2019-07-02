@@ -14,12 +14,6 @@ fi
 
 while test -n "${1}"; do
   case "${1}" in
-    --api_using_python_stub=user)
-      # we currently use a local service implementation for user
-      ;;
-    --disable_update_check)
-      # ignore, update checks are not supported
-      ;;
     --jvm_flag=*)
       APP_OPTS="${APP_OPTS} ${1##--jvm_flag=}"
       ;;

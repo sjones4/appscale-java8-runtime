@@ -39,6 +39,8 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
       AttributeKey.of("com.google.appengine.request.start_time", Date.class);
   public static final AttributeKey<Boolean> ATTR_OFFLINE =
       AttributeKey.of("com.google.appengine.request.offline", Boolean.class);
+  public static final AttributeKey<HttpServletRequest> ATTR_REQUEST =
+      AttributeKey.of("com.google.appengine.http_servlet_request", HttpServletRequest.class);
 
   private static final Logger logger = Logger.getLogger(RuntimeEnvironment.class.getName());
   private static final AtomicInteger requestID = new AtomicInteger();
@@ -136,9 +138,18 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
   public static RuntimeEnvironment current() {
     final Environment environment = ApiProxy.getCurrentEnvironment();
     if (!(environment instanceof RuntimeEnvironment)) {
-      throw new IllegalStateException("Unexpected environment" + environment);
+      throw new IllegalStateException("Unexpected environment " + environment);
     }
     return (RuntimeEnvironment) environment;
+  }
+
+  public static <T> Optional<T> getCurrentAttribute(final AttributeKey<T> key) {
+    final Environment environment = ApiProxy.getCurrentEnvironment();
+    if (environment instanceof RuntimeEnvironment) {
+      return ((RuntimeEnvironment) environment).getAttribute(key);
+    } else {
+      return Optional.empty();
+    }
   }
 
   static void setInstance(Map<String, Object> attributes, int instance) {
@@ -192,6 +203,7 @@ public class RuntimeEnvironment implements ApiProxy.Environment {
   }
 
   @Override
+  @Deprecated
   public String getRequestNamespace( ) {
     return "";
   }
