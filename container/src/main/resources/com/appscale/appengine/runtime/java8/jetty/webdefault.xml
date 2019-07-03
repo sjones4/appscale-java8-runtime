@@ -62,12 +62,17 @@
     </filter-class>
   </filter>
 
-  <!-- This filter should only be used here, not in devappserver2, since -->
-  <!-- devappserver2 uses the Remote API instead of a local API proxy.   -->
   <filter>
     <filter-name>_ah_ServeBlobFilter</filter-name>
     <filter-class>
-      com.google.appengine.api.blobstore.dev.ServeBlobFilter
+      com.appscale.appengine.runtime.java8.util.ServeBlobFilter
+    </filter-class>
+  </filter>
+
+  <filter>
+    <filter-name>_ah_UploadBlobFilter</filter-name>
+    <filter-class>
+      com.appscale.appengine.runtime.java8.util.UploadBlobFilter
     </filter-class>
   </filter>
 
@@ -108,6 +113,11 @@
     <url-pattern>/*</url-pattern>
     <dispatcher>FORWARD</dispatcher>
     <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
+  <filter-mapping>
+    <filter-name>_ah_UploadBlobFilter</filter-name>
+    <url-pattern>/*</url-pattern>
   </filter-mapping>
 
   <filter-mapping>

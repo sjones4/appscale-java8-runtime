@@ -6,6 +6,7 @@
 
 dependencies {
   api "com.google.appengine:appengine-api-1.0-sdk:${sdkVersion}"
+  api "com.google.appengine:appengine-api-stubs:${sdkVersion}"
   api "com.google.appengine:appengine-local-runtime:${sdkVersion}"
   api "com.google.appengine:appengine-remote-api:${sdkVersion}"
   api "com.google.appengine:appengine-testing:${sdkVersion}"
