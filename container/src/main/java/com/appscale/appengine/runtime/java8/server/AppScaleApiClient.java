@@ -30,9 +30,9 @@ import com.google.apphosting.utils.runtime.ApiProxyUtils;
  *
  */
 public class AppScaleApiClient {
-  private static final int MAX_CONNECTIONS = 50;
+  private static final int MAX_CONNECTIONS = 20;
   private static final int CONNECTION_VALIDATE_SECS = 0;
-  private static final int CONNECTION_TTL_SECS = 30;
+  private static final int CONNECTION_TTL_SECS = 8;
 
   private final int port;
   private final CloseableHttpClient httpClient = HttpClientBuilder.create()
